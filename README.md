@@ -2,6 +2,8 @@
 
 An offline Windows app for starting Clone Hero charts from local Guitar Pro scores.
 
+<img width="1919" height="1030" alt="Screenshot 2026-10-08 191232" src="https://github.com/user-attachments/assets/44113041-d443-489e-a291-1e1ab6616bfe" />
+
 ## Start
 
 Extract the complete ZIP into a new folder. Run **Start.cmd**, or **Windows/ChartStarter.exe**. Keep the executable and its `_internal` folder together. The Windows release includes its runtimes; no Python installation is required.
