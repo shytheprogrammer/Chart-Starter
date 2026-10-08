@@ -3,7 +3,7 @@ TOPICS = {
     'Quick start': '''Chart Starter 1.0 turns a local Guitar Pro score into a Clone Hero song folder.
 
 1. Open the Chart tab and click Load .gp file. Choose a GP, GPX, GP3, GP4 or GP5 score. Modern GP7/GP8 files are supported too. Reading may take a moment.
-2. Enter the song BPM when prompted. You can change this field before export. The GP tempo map still controls synchronization; this number controls the drum Double Bass eligibility rule.
+2. Enter the song BPM when prompted. You can change this field before export. The export contains one BPM marker at tick 0 using this value, plus one 4/4 time-signature marker at tick 0. It also controls the drum Double Bass eligibility rule.
 3. In each instrument tab, choose the source track and check Include for the parts you want. Drums are enabled when the file contains a percussion track. Pitched parts are not enabled automatically: confirm the track suggestion and check Include.
 4. Review the drum mapping and preview the Expert Guitar/Bass/Rhythm patterns.
 5. Supply title/artist, optional recording and lyrics, and an output folder. Fill optional song properties and choose any media/extras.
@@ -12,7 +12,7 @@ TOPICS = {
 8. Open the created chart in Moonscraper and align everything with the matching recording. Review synchronization, instrument patterns, reductions, lyrics and Star Power before playing or sharing. Read conversion_report.json for assumptions and repairs.
 
 Everything works offline after extracting the Windows release. No Songsterr search or download is included. Keep the executable with its _internal folder; Start.cmd launches it.''',
-    'Load files and choose instruments': '''The app imports one GP score at a time. Every enabled instrument must use a track from that score; all parts share its original playback timeline, including repeats, tempo changes and tuplets.
+    'Load files and choose instruments': '''The app imports one GP score at a time. Every enabled instrument must use a track from that score; all parts share its playback note positions, including repeats and tuplets. GP tempo changes are replaced by one starting BPM marker using the entered Song BPM. Every export has one 4/4 time-signature marker at tick 0; all GP time-signature changes are omitted.
 
 The Drums selector lists percussion tracks. Guitar, Bass and Rhythm selectors list playable pitched tracks. Suggestions use track names and MIDI programs; they may need correction. A guitar track can be assigned to a different role deliberately, but enabling several roles from the same track creates several playable versions of the same music.
 
@@ -36,7 +36,7 @@ Written ghost/accent annotations are retained when matched to playback. Estimate
 Pro Drums cannot represent every acoustic distinction: hi-hat openness, bell/edge/choke details, every auxiliary drum, and continuous velocities may be reduced. Review flams, grace notes and rolls against the recording.''',
     'Double Bass and drum difficulties': '''Enter a positive song BPM. If it is above 110 BPM, consecutive kick runs with gaps of a sixteenth note or less alternate normal Kick and Double Bass, starting with a normal kick. Runs require at least two kicks; a longer gap resets the alternation. At 110 BPM or slower no Double Bass tags are added by this rule.
 
-This is the eligibility behavior configured for this app. The original GP tempo changes still set note timing; changing the entered BPM does not resync or speed up the chart.
+This is the eligibility behavior configured for this app. The entered BPM sets the single starting tempo for all exported parts. Changing it changes playback speed; source note ticks stay in place.
 
 Every enabled drum part gets Expert, Hard, Medium and Easy. Expert follows the imported mapped playback hits, subject to documented representational limits. Hard reduces ghost detail, dense kicks and demanding fill coordination. Medium simplifies timekeeping and reduces simultaneous limbs. Easy uses stable simplified hand/kick sections and less coordination. Lower tiers remove hits rather than inventing or shifting their onset times, and remove optional Double Bass.
 
@@ -58,7 +58,7 @@ Use an instrument intensity override if its automatic estimate does not reflect 
 
 Use the exact recording/version represented by the GP score. Different intros, live takes, edits, repeats or tempo maps may not align. A constant delay corrects a constant offset; it cannot correct ongoing tempo drift. Fix the source score/recording when timing drifts throughout the song.
 
-Audio delay is whole milliseconds: positive values make the chart start later relative to the recording; negative values make it start sooner. Example: if the chart appears 200 ms too early, try +200. Export again and test. The app retains the GP tempo map instead of imposing the entered song BPM.
+Audio delay is whole milliseconds: positive values make the chart start later relative to the recording; negative values make it start sooner. Example: if the chart appears 200 ms too early, try +200. Export again and test. The app uses one BPM marker at the start, set to the entered Song BPM. Align the chart in Moonscraper and add tempo changes there if the recording requires them.
 
 Optional stems are added through the extras picker: Guitar, Bass, Rhythm, combined Drums or numbered drum stems, vocals, keys and crowd. Use synchronized stems and a backing-only main track. Combining a full mix with its separated stems doubles those sounds. The app does not separate, mix, normalize or transcode audio. Choose either combined or numbered drums, not both.
 
@@ -95,7 +95,7 @@ Export recalculates from the current selection and mapping. The report records e
 
 Minute:second timestamps allow 1–3 fractional digits. Repeated line timestamps and mixed standard/enhanced files are supported. Untimed metadata is ignored; [offset:100] adds 100 ms to the file's timestamps.
 
-Lyrics adjustment affects only lyrics: positive milliseconds make them later. It also works with the audio-delay compensation and original GP tempo changes. Negative resulting chart times are clamped and reported.
+Lyrics adjustment affects only lyrics: positive milliseconds make them later. It also works with the audio-delay compensation and the single entered song BPM. Negative resulting chart times are clamped and reported.
 
 When a phrase lacks an explicit end, the next timestamped line supplies it; the final phrase ends 3 seconds after its final lyric. Review these estimated ends. Lyrics are displayed text, not pitched/scored vocal notes, and apply across all difficulties.''',
     'Automatic lyric repairs and later edits': '''Backward word timestamps are repaired while preserving text order. A consecutive backward block is spaced evenly between its preceding valid word and next valid word. At the end of a line, the next line or an explicit phrase end supplies the right boundary; otherwise a 3-second interval is used.
@@ -109,7 +109,7 @@ To refine a repair: open lyrics_adjusted.lrc in your text/LRC editor, adjust aga
 Malformed timestamps, invalid encodings and duplicate line starts still require correction. Repairs are practical guesses, so listen and review the affected words.''',
     'Star Power placement': '''Add Star Power is on by default. Every selected instrument and playable difficulty gets earnable reward phrases, using the GP bar grid and original onset times.
 
-The helper places phrases up to two musical bars long, roughly every eight active bars. Expert windows guide lower-tier placements, adjusted to the notes that remain. It avoids empty phrases, long rests, section crossings and overlaps. Very short or sparse tiers get short fallback phrases with a report note.
+The helper places phrases up to two musical bars long, roughly every eight active bars on the exported 4/4 grid. Expert windows guide lower-tier placements, adjusted to the notes that remain. It avoids empty phrases, long rests, section crossings and overlaps. Very short or sparse tiers get short fallback phrases with a report note.
 
 This adds Star Power reward phrases (S 2) without changing the playable notes. It does not add forced drum activation fills, auto-activate Star Power, or replace a drum hit. Use the normal activation method for your controller in Clone Hero.
 
@@ -153,7 +153,7 @@ No percussion track: disable drums and use pitched tabs, or choose a different s
 
 Strict export blocks: map missing pitches, resolve same-lane collisions, or deliberately choose Ignore. Turn Strict off only when you accept the approximation documented in the report.
 
-Bad timing / drift: select the exact recording, check GP repeats and tempo map, and use Audio delay only for a constant offset. Changing the Song BPM field does not rewrite GP tempo changes.
+Bad timing / drift: select the exact recording, check GP repeats and tempo map, and use Audio delay only for a constant offset. The Song BPM field sets the single export tempo. Add any needed tempo changes in Moonscraper.
 
 Lyrics fail: use UTF-8/UTF-16, correct malformed timestamps or duplicate line starts, and review any repaired copy. A file larger than 2 MB is rejected. Negative-time clamping is reported.
 

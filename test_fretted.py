@@ -18,6 +18,21 @@ def expert_lanes(report):
     return [tuple(e['lanes']) for e in report['expert_pattern']]
 
 class FrettedTests(unittest.TestCase):
+    def test_entered_tempo_applies_to_fretted_only_and_lyrics(self):
+        from lyrics import parse_lrc
+        score = score_for([60,62,64], spacing=960)
+        score['tempos'] = [{'tick':0,'bpm':90}, {'tick':960,'bpm':200}]
+        score['signatures'] = [{'tick':0,'numerator':3,'denominator':4}, {'tick':960,'numerator':7,'denominator':8}]
+        chart, report = convert_song(score, None, {}, song_bpm=150.25,
+            fretted_tracks={'Guitar':{'track_index':0}},
+            lyrics=parse_lrc('[00:01.000]Hello'))
+        self.assertEqual(re.findall(r'(\d+) = B (\d+)', chart), [('0','150250')])
+        self.assertEqual(re.findall(r'(\d+) = TS (\d+) (\d+)', chart), [('0','4','2')])
+        self.assertIn('2404 = E "lyric Hello"', chart)
+        self.assertAlmostEqual(report['duration_seconds'], 3*60/150.25)
+        self.assertEqual(score['tempos'][0]['bpm'],90)
+        self.assertEqual(report['tempo']['song_bpm'],150.25)
+
     def test_five_pitch_run_and_reverse_preserve_direction(self):
         for pitches, expected in [([60,62,64,65,67], [(0,),(1,),(2,),(3,),(4,)]),
                                   ([67,65,64,62,60], [(4,),(3,),(2,),(1,),(0,)])]:

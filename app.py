@@ -342,7 +342,7 @@ class App(tk.Tk):
     def ask_song_bpm(self):
         initial = next((t['bpm'] for t in self.score['tempos'] if t['tick'] == 0), 120)
         bpm = simpledialog.askfloat('Song BPM',
-            'What is the song BPM?\nAbove 110 BPM, consecutive 16th-note kicks or faster alternate Double Bass.',
+            'What is the song BPM? This sets the single starting BPM marker.\nAbove 110 BPM, consecutive 16th-note kicks or faster alternate Double Bass.',
             parent=self, initialvalue=initial, minvalue=0.001)
         if bpm is not None:
             self.song_bpm.set(f'{bpm:g}')

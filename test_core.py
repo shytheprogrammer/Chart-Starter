@@ -47,13 +47,15 @@ class CoreTests(unittest.TestCase):
         self.assertEqual([r['double_bass_ticks'] for r in report['double_bass']['runs']], [[240], [1680, 2160]])
         self.assertIn('1440 = N 0 0', chart)
 
-    def test_entered_bpm_controls_eligibility_without_overwriting_tempos(self):
+    def test_entered_bpm_replaces_source_tempo_changes(self):
         s = score([hit(t, 36) for t in [0, 240, 480]])
         s['tempos'] = [{'tick': 0, 'bpm': 90}, {'tick': 120, 'bpm': 60}]
         chart, report = core.convert(s, 0, core.DEFAULT_MAP, song_bpm=120)
         self.assertIn('240 = N 32 0', chart)
-        self.assertIn('0 = B 90000', chart)
-        self.assertIn('120 = B 60000', chart)
+        self.assertIn('0 = B 120000', chart)
+        self.assertNotIn('120 = B', chart)
+        self.assertEqual(chart.count(' = B '), 1)
+        self.assertEqual(s['tempos'][0]['bpm'], 90)
         self.assertEqual(report['double_bass']['song_bpm'], 120)
 
     def test_bpm_boundary_is_strictly_greater_than_110(self):
@@ -132,13 +134,15 @@ class CoreTests(unittest.TestCase):
         self.assertIn('0 = N 40 0', chart)
         self.assertIn('960 = N 34 0', chart)
 
-    def test_meter_denominator_and_tempo_duration(self):
+    def test_only_starting_four_four_and_tempo_duration(self):
         s = score([hit(0, 36)])
         s['signatures'].append({'tick': 1920, 'numerator': 7, 'denominator': 8})
         chart, report = core.convert(s, 0, core.DEFAULT_MAP)
-        self.assertIn('1920 = TS 7 3', chart)
-        self.assertIn('1920 = B 60000', chart)
-        self.assertAlmostEqual(report['duration_seconds'], 3)
+        self.assertIn('0 = TS 4 2', chart)
+        self.assertEqual(chart.count(' = TS '), 1)
+        self.assertEqual(s['signatures'][-1]['numerator'], 7)
+        self.assertNotIn('1920 = B', chart)
+        self.assertAlmostEqual(report['duration_seconds'], 2)
 
     def test_export_is_complete_and_never_overwrites(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as d:
@@ -154,7 +158,7 @@ class CoreTests(unittest.TestCase):
             self.assertIn('pro_drums = True', (folder / 'song.ini').read_text())
             self.assertIn('delay = 200', (folder / 'song.ini').read_text())
             with wave.open(str(folder / 'song.wav')) as w:
-                self.assertAlmostEqual(w.getnframes() / w.getframerate(), 6.2, places=3)
+                self.assertAlmostEqual(w.getnframes() / w.getframerate(), 5.2, places=3)
             self.assertEqual(json.loads((folder / 'conversion_report.json').read_text())['source_hits'], 1)
 
     def test_audio_copy_preserves_bytes(self):
@@ -188,7 +192,7 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(sum(bool(n.get('accent')) for n in t['notes']), 4)
         _, report = core.convert(s, 0, core.DEFAULT_MAP)
         self.assertEqual(report['exported_hits'], 80)
-        self.assertAlmostEqual(report['duration_seconds'], 9 + 1/3)
+        self.assertAlmostEqual(report['duration_seconds'], 8)
 
 
 if __name__ == '__main__':

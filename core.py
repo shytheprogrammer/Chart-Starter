@@ -127,9 +127,22 @@ def double_bass_ticks(score: dict, ticks: list[int], song_bpm: float) -> tuple[s
     return tagged, runs
 
 
+def fixed_tempo_score(score, song_bpm=None):
+    """Use the chosen tempo and 4/4 export grid without mutating the imported score."""
+    bpm = song_bpm if song_bpm is not None else next((t['bpm'] for t in score['tempos'] if t['tick'] == 0), 120)
+    if not math.isfinite(bpm) or bpm <= 0:
+        raise AppError('Enter a finite song BPM greater than zero.')
+    bpm = round(bpm * 1000) / 1000
+    if bpm <= 0:
+        raise AppError('Song BPM must be at least 0.001.')
+    return dict(score, tempos=[{'tick': 0, 'bpm': bpm}],
+                signatures=[{'tick': 0, 'numerator': 4, 'denominator': 4}], bars=[])
+
+
 def convert(score: dict, track_index: int, mapping: dict[int, str], *, strict=True,
             dynamics=False, title='', artist='', audio_name='song.wav',
             song_bpm=None, lyrics=None, offset_ms=0, lyrics_offset_ms=0) -> tuple[str, dict]:
+    score = fixed_tempo_score(score, song_bpm)
     track = next((t for t in score['tracks'] if t['index'] == track_index), None)
     if track is None or not track['percussion']:
         raise AppError('Select a percussion track.')
@@ -229,13 +242,7 @@ def chart_header(score, title='', artist='', audio_name='song.wav', lyrics=None,
         if not math.isfinite(bpm) or bpm <= 0:
             raise AppError('The source contains an invalid tempo.')
         sync.append((tick, f'B {round(bpm * 1000)}'))
-    signatures = {int(round(s['tick'])): s for s in score['signatures']}
-    signatures.setdefault(0, {'numerator': 4, 'denominator': 4})
-    for tick, sig in signatures.items():
-        denominator = sig['denominator']
-        if denominator <= 0 or denominator & (denominator - 1):
-            raise AppError('The time signature denominator is unsupported.')
-        sync.append((tick, f"TS {sig['numerator']} {int(math.log2(denominator))}"))
+    sync.append((0, 'TS 4 2'))
     lines += [f'  {tick} = {event}' for tick, event in sorted(sync)]
     lyric_events, lyric_report = [], None
     if lyrics is not None:
@@ -274,6 +281,7 @@ def write_silence(path: Path, seconds: float):
 def convert_song(score, track_index, mapping, *, fretted_tracks=None, intensity_override=None,
                  song_intensity_override=None, star_power_enabled=True, **options):
     """One shared timeline with optional drums and any selected five-fret roles."""
+    score = fixed_tempo_score(score, options.get('song_bpm'))
     instruments = {}
     if track_index is not None:
         chart, report = convert(score, track_index, mapping, **options)
@@ -298,6 +306,7 @@ def convert_song(score, track_index, mapping, *, fretted_tracks=None, intensity_
     if not instruments:
         raise AppError('Select at least one instrument to export.')
     report['instruments'] = instruments
+    report['tempo'] = {'mode': 'single_bpm', 'song_bpm': score['tempos'][0]['bpm'], 'marker_tick': 0, 'time_signature': '4/4'}
     report['application'] = {'name': APP_NAME, 'version': RELEASE_VERSION}
     report['song_intensity'] = song_intensity(instruments, song_intensity_override)
     if star_power_enabled:

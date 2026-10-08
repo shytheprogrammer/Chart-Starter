@@ -2,8 +2,6 @@
 
 An offline Windows app for starting Clone Hero charts from local Guitar Pro scores.
 
-<img width="1919" height="1030" alt="image" src="https://github.com/user-attachments/assets/bbdf19b0-ebd0-4a40-befa-0a33f1cc9515" />
-
 ## Start
 
 Extract the complete ZIP into a new folder. Run **Start.cmd**, or **Windows/ChartStarter.exe**. Keep the executable and its `_internal` folder together. The Windows release includes its runtimes; no Python installation is required.
@@ -46,3 +44,7 @@ Search for Guitar Pro tabs on [Songsterr](https://www.songsterr.com/), copy the 
 Install Python 3.10+ with Tkinter and Node.js, with `node` available on PATH. Run `python app.py` from the repository folder. The app needs no third-party Python packages. Run the test suite with `python -m unittest discover`.
 
 The GitHub source package excludes compiled Windows builds, bundled runtime executables, caches and design notes. Windows users can use the separate packaged release.
+
+## Export tempo
+
+The Song BPM you enter creates one BPM marker at tick 0. GP tempo changes are omitted. All instrument notes keep their source tick positions; lyrics, difficulty calculations and practice-audio duration use the entered tempo. The export contains only one 4/4 time-signature marker at tick 0; GP time signatures and their changes are omitted. Star Power uses the exported 4/4 bar grid. Align the result in Moonscraper and add any tempo changes needed for the recording.
