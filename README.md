@@ -1,4 +1,4 @@
-<img width="1254" height="1254" alt="chart-starter-logo" src="https://github.com/user-attachments/assets/a97247c2-fa90-4f04-aed5-1724605d3b20" />
+<img width="250" height="1250" alt="chart-starter-logo" src="https://github.com/user-attachments/assets/a97247c2-fa90-4f04-aed5-1724605d3b20" />
 
 # Chart Starter 1.0
 
