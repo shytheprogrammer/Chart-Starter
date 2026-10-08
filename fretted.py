@@ -43,7 +43,7 @@ def prepare_events(track):
                        'open': len(pitches) == 1 and all(n.get('fret') == 0 for n in notes)})
     return events
 
-def _melody_chunks(events, score, capacity):
+def _window_chunks(events, score, capacity):
     """Reset at rests/sections/chords; split a wide motif into ordered fret windows."""
     sections = {round(s['tick']) for s in score.get('sections', [])}
     chunks, chunk, distinct = [], [], set()
@@ -89,6 +89,65 @@ def _melody_chunks(events, score, capacity):
                 continue
         balanced.append(run)
     return balanced
+
+def _melody_chunks(events, score, capacity):
+    """Give recurring bars and consecutive riff repeats their own fret windows."""
+    if not events:
+        return []
+    def identity(event):
+        return (tuple(event['pitches']), event['length'], event['hopo'],
+                event['tap'], event['muted'], event['open'])
+    boundaries = {0, len(events)}
+    # Repeated bars must not inherit a different pitch palette from neighboring
+    # fills or phrases. Include timing and articulation in the match.
+    bar_length = 4 * score['ppq']
+    bars = defaultdict(list)
+    for index, event in enumerate(events):
+        bars[event['tick']//bar_length].append(index)
+    occurrences = defaultdict(list)
+    for indices in bars.values():
+        key = tuple((events[i]['tick'] % bar_length, identity(events[i])) for i in indices)
+        occurrences[key].append(indices)
+    for matches in occurrences.values():
+        if len(matches) > 1:
+            for indices in matches:
+                boundaries.update((indices[0], indices[-1]+1))
+    # Also catch wide repeated riffs within/across bars. Matching inter-attack
+    # gaps prevents a differently timed fill from being treated as the riff.
+    tokens = [(identity(e), events[i+1]['tick']-e['tick'] if i+1 < len(events) else None)
+              for i,e in enumerate(events)]
+    start = 0
+    while start < len(events)-3:
+        found = False
+        for period in range(2, min(128, (len(events)-start)//2)+1):
+            if tokens[start] != tokens[start+period]:
+                continue
+            first = tokens[start:start+period]
+            # The last attack's outgoing gap can differ at the end of a repeat.
+            second = tokens[start+period:start+2*period]
+            if first[:-1] != second[:-1] or first[-1][0] != second[-1][0]:
+                continue
+            if len({token[0][0] for token in first}) < 2:
+                continue
+            end = start+2*period
+            while end+period <= len(events):
+                following = tokens[end:end+period]
+                if following[:-1] != first[:-1] or following[-1][0] != first[-1][0]:
+                    break
+                end += period
+            boundaries.difference_update([b for b in boundaries if start < b < end])
+            boundaries.update(range(start, end+1, period))
+            start = end
+            found = True
+            break
+        if not found:
+            start += 1
+    result = []
+    ordered = sorted(boundaries)
+    for left,right in zip(ordered,ordered[1:]):
+        result.extend(_window_chunks(events[left:right], score, capacity))
+    return result
+
 
 def _map(events, score, capacity, max_chord, open_notes=False):
     mapped, resets = [], []

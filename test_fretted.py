@@ -44,6 +44,28 @@ class FrettedTests(unittest.TestCase):
         self.assertEqual(expert_lanes(report), [(0,),(1,),(2,),(0,),(1,),(2,)])
         self.assertEqual(report['source_positions'], 6)
 
+    def test_wide_consecutive_riff_repeats_keep_identical_frets(self):
+        riff = [60,62,64,65,67,69,67,65]
+        for role in ('Guitar','Bass','Rhythm'):
+            _, report = chart_fretted(score_for(riff*4), 0, role)
+            lanes = expert_lanes(report)
+            for start in range(8,32,8):
+                self.assertEqual(lanes[:8],lanes[start:start+8])
+
+    def test_repeated_six_pitch_riff_crossing_bar_boundaries(self):
+        riff = [60,62,64,65,67,69]
+        _, report = chart_fretted(score_for(riff*20),0,'Guitar')
+        lanes = expert_lanes(report)
+        for start in range(6,len(lanes),6):
+            self.assertEqual(lanes[:6],lanes[start:start+6])
+
+    def test_repeated_bars_keep_pattern_despite_neighboring_fills(self):
+        riff = [60,64,67,64]
+        score = score_for([55,57,59,60]+riff+[72,74,76,77]+riff, spacing=960)
+        _, report = chart_fretted(score,0,'Guitar')
+        lanes = expert_lanes(report)
+        self.assertEqual(lanes[4:8], lanes[12:16])
+
     def test_trills_and_repeated_pitch_remain_consistent(self):
         _, report = chart_fretted(score_for([60,67,60,67,60,60,67]), 0, 'Guitar')
         self.assertEqual(expert_lanes(report), [(0,),(1,),(0,),(1,),(0,),(0,),(1,)])

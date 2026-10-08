@@ -45,7 +45,7 @@ Read the difficulty counts and reduction warnings in conversion_report.json. Spa
 
 The preview shows playback tick, source pitches and controller colors: G = green, R = red, Y = yellow, B = blue, O = orange. It shows the first 500 positions; the report contains the full Expert mapping.
 
-Five-fret conversion is a musical reduction rather than a literal pitch-to-button assignment. Ordered pitch ranks preserve note repetition, trills and melodic direction within a window. Rests, sections, chords and more than five distinct pitches can reset the window. Long ascending/descending runs are balanced across several windows so the extra pitches do not become an isolated tail. Review these transitions against the music.
+Five-fret conversion is a musical reduction rather than a literal pitch-to-button assignment. Ordered pitch ranks preserve note repetition, trills and melodic direction within a window. Rests, sections, chords and more than five distinct pitches can reset the window. Long ascending/descending runs are balanced across several windows so the extra pitches do not become an isolated tail. Matching repeated bars and consecutive riffs use consistent fret windows so repeated music keeps the same pattern. Review these transitions against the music.
 
 Octave doublings collapse, and Expert chords use at most three frets with comfortable spans. Matching chord/root shapes use consistent templates; power chords can use skipped-fret dyads. Chords share a sustain length. Sustains get a sixteenth-note release gap before the next attack; muted/staccato notes and very short holds do not get long sustains. Written hammer/pull/legato and left-hand-tap flags guide note types. Not every bend, harmonic, finger or string distinction can fit five frets.
 
